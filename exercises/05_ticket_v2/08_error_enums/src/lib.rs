@@ -1,14 +1,35 @@
 // TODO: Use two variants, one for a title error and one for a description error.
 //   Each variant should contain a string with the explanation of what went wrong exactly.
 //   You'll have to update the implementation of `Ticket::new` as well.
-enum TicketNewError {}
+#[derive(Debug)]
+enum TicketNewError {
+    TitleEmpty { reason: String },
+    TitleTooLong { reason: String },
+    DescriptionEmpty { reason: String },
+    DescriptionTooLong { reason: String },
+}
 
 // TODO: `easy_ticket` should panic when the title is invalid, using the error message
 //   stored inside the relevant variant of the `TicketNewError` enum.
 //   When the description is invalid, instead, it should use a default description:
 //   "Description not provided".
 fn easy_ticket(title: String, description: String, status: Status) -> Ticket {
-    todo!()
+    let ticket = Ticket::new(title.clone(), description, status.clone());
+
+    match ticket {
+        Ok(ticket_obj) => ticket_obj,
+        Err(ticket_err) => match ticket_err {
+            TicketNewError::TitleEmpty { reason } | TicketNewError::TitleTooLong { reason } => {
+                panic!("{}", reason.to_string());
+            }
+
+            TicketNewError::DescriptionEmpty { reason }
+            | TicketNewError::DescriptionTooLong { reason } => {
+                return Ticket::new(title, String::from("Description not provided"), status)
+                    .unwrap();
+            }
+        },
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -32,16 +53,24 @@ impl Ticket {
         status: Status,
     ) -> Result<Ticket, TicketNewError> {
         if title.is_empty() {
-            return Err("Title cannot be empty".to_string());
+            return Err(TicketNewError::TitleEmpty {
+                reason: String::from("Title cannot be empty"),
+            });
         }
         if title.len() > 50 {
-            return Err("Title cannot be longer than 50 characters".to_string());
+            return Err(TicketNewError::TitleTooLong {
+                reason: String::from("Title cannot be longer than 50 characters"),
+            });
         }
         if description.is_empty() {
-            return Err("Description cannot be empty".to_string());
+            return Err(TicketNewError::DescriptionEmpty {
+                reason: String::from("Description cannot be empty"),
+            });
         }
         if description.len() > 500 {
-            return Err("Description cannot be longer than 500 characters".to_string());
+            return Err(TicketNewError::DescriptionTooLong {
+                reason: String::from("Description too long"),
+            });
         }
 
         Ok(Ticket {
